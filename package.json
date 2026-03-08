@@ -1,0 +1,26 @@
+{
+  "name": "readmeforge",
+  "version": "1.0.0",
+  "description": "Generate professional GitHub READMEs instantly using Claude AI",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node --watch server.js"
+  },
+  "keywords": [
+    "readme",
+    "generator",
+    "github",
+    "claude",
+    "ai"
+  ],
+  "author": "Krishna",
+  "license": "MIT",
+  "type": "commonjs",
+  "dependencies": {
+    "@anthropic-ai/sdk": "^0.78.0",
+    "dotenv": "^17.3.1",
+    "express": "^5.2.1",
+    "express-rate-limit": "^8.3.0"
+  }
+}

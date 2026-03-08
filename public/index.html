@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ReadmeForge - AI README Generator</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div class="layout">
+    <!-- Sidebar -->
+    <aside id="sidebar">
+      <div class="sidebar-header">
+        <h2>History</h2>
+        <button id="sidebar-close" class="icon-btn" title="Close">&times;</button>
+      </div>
+      <div id="history-list" class="history-list">
+        <p class="empty-state">No READMEs generated yet</p>
+      </div>
+    </aside>
+
+    <!-- Main Content -->
+    <div class="main-wrap">
+      <header>
+        <div class="header-row">
+          <button id="sidebar-toggle" class="icon-btn" title="History">&#9776;</button>
+          <div>
+            <h1>ReadmeForge</h1>
+            <p class="tagline">Describe your project. Get a production-ready README in seconds.</p>
+          </div>
+        </div>
+      </header>
+
+      <main>
+        <form id="readme-form">
+          <!-- Template selector -->
+          <div class="template-selector">
+            <label>Template</label>
+            <div class="template-cards">
+              <button type="button" class="template-card" data-template="minimal">
+                <strong>Minimal</strong>
+                <span>Clean & concise. Just the essentials.</span>
+              </button>
+              <button type="button" class="template-card active" data-template="standard">
+                <strong>Standard</strong>
+                <span>Balanced. Badges, usage, contributing.</span>
+              </button>
+              <button type="button" class="template-card" data-template="detailed">
+                <strong>Detailed</strong>
+                <span>Comprehensive. Architecture, API, FAQ.</span>
+              </button>
+            </div>
+          </div>
+          <input type="hidden" id="template" value="standard">
+
+          <div class="form-group">
+            <label for="projectName">Project Name</label>
+            <input type="text" id="projectName" placeholder="e.g. ReadmeForge" maxlength="200">
+          </div>
+
+          <div class="form-group">
+            <label for="description">Project Description <span class="required">*</span></label>
+            <textarea id="description" rows="5" placeholder="What does your project do? What problem does it solve? Who is it for?" required minlength="10" maxlength="5000"></textarea>
+            <div class="char-count"><span id="desc-count">0</span> / 5000</div>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label for="language">Language / Stack</label>
+              <input type="text" id="language" placeholder="e.g. TypeScript, React, Node.js" maxlength="200">
+            </div>
+            <div class="form-group">
+              <label for="license">License</label>
+              <select id="license">
+                <option value="MIT">MIT</option>
+                <option value="Apache-2.0">Apache 2.0</option>
+                <option value="GPL-3.0">GPL 3.0</option>
+                <option value="BSD-3-Clause">BSD 3-Clause</option>
+                <option value="ISC">ISC</option>
+                <option value="Unlicense">Unlicense</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label for="features">Key Features</label>
+            <textarea id="features" rows="3" placeholder="One feature per line:&#10;- Real-time streaming&#10;- Dark mode UI&#10;- One-click export" maxlength="2000"></textarea>
+          </div>
+
+          <div class="form-group">
+            <label for="githubUrl">GitHub URL <span class="optional">(optional)</span></label>
+            <input type="url" id="githubUrl" placeholder="https://github.com/user/repo" maxlength="500">
+          </div>
+
+          <button type="submit" id="generate-btn">
+            <span id="btn-text">Generate README</span>
+            <span id="btn-spinner" class="spinner hidden"></span>
+          </button>
+        </form>
+
+        <!-- Output -->
+        <div id="output-section" class="hidden">
+          <div class="output-header">
+            <div class="tab-bar">
+              <button class="tab active" data-tab="preview">Preview</button>
+              <button class="tab" data-tab="raw">Markdown</button>
+            </div>
+            <div class="output-actions">
+              <button id="copy-btn" title="Copy markdown">Copy</button>
+              <button id="download-btn" title="Download README.md">Download</button>
+            </div>
+          </div>
+          <div id="preview-tab" class="tab-panel active">
+            <div id="readme-preview" class="markdown-body"></div>
+          </div>
+          <div id="raw-tab" class="tab-panel">
+            <pre><code id="readme-raw"></code></pre>
+          </div>
+        </div>
+      </main>
+
+      <footer>
+        <p>Created by Krishna &mdash; Powered by Claude API</p>
+      </footer>
+    </div>
+  </div>
+
+  <!-- Toast -->
+  <div id="toast" class="toast hidden"></div>
+
+  <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
