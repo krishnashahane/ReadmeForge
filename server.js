@@ -231,7 +231,9 @@ app.post("/api/generate", generateLimiter, async (req, res) => {
 
 // History list
 app.get("/api/history", (req, res) => {
+  const sessionId = getSessionId(req, res);
   const items = [...history.values()]
+    .filter((entry) => entry.sessionId === sessionId)
     .reverse()
     .map(({ id, projectName, template, createdAt }) => ({ id, projectName, template, createdAt }));
   res.json(items);
@@ -239,14 +241,17 @@ app.get("/api/history", (req, res) => {
 
 // Get single history entry
 app.get("/api/history/:id", (req, res) => {
+  const sessionId = getSessionId(req, res);
   const entry = history.get(req.params.id);
-  if (!entry) return res.status(404).json({ error: "Not found" });
+  if (!entry || entry.sessionId !== sessionId) return res.status(404).json({ error: "Not found" });
   res.json(entry);
 });
 
 // Delete history entry
 app.delete("/api/history/:id", (req, res) => {
-  if (!history.has(req.params.id)) return res.status(404).json({ error: "Not found" });
+  const sessionId = getSessionId(req, res);
+  const entry = history.get(req.params.id);
+  if (!entry || entry.sessionId !== sessionId) return res.status(404).json({ error: "Not found" });
   history.delete(req.params.id);
   res.json({ ok: true });
 });
@@ -254,6 +259,13 @@ app.delete("/api/history/:id", (req, res) => {
 // ─── Start ──────────────────────────────────────────────────────────────────
 
 const PORT = Number(process.env.PORT) || 3000;
-app.use((err, req, res, next) => {\n  if (err.type === "entity.too.large") return res.status(413).json({ error: "Request body is too large." });\n  console.error(`[${new Date().toISOString()}] Unhandled error:`, err.message);\n  if (res.headersSent) return next(err);\n  res.status(500).json({ error: "Internal server error." });\n});\n\napp.listen(PORT, () => {
+app.use((err, req, res, next) => {
+  if (err.type === "entity.too.large") return res.status(413).json({ error: "Request body is too large." });
+  console.error(`[${new Date().toISOString()}] Unhandled error:`, err.message);
+  if (res.headersSent) return next(err);
+  res.status(500).json({ error: "Internal server error." });
+});
+
+app.listen(PORT, () => {
   console.log(`\n  ReadmeForge running at http://localhost:${PORT}\n`);
 });
