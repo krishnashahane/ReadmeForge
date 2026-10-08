@@ -88,8 +88,54 @@ function showToast(message, duration = 2500) {
 
 // ─── Render Markdown ────────────────────────────────────────────────────────
 
+function sanitizeRenderedMarkdown(md) {
+  const template = document.createElement("template");
+  template.innerHTML = marked.parse(md);
+  const allowedTags = new Set([
+    "A", "BLOCKQUOTE", "BR", "CODE", "DEL", "EM", "H1", "H2", "H3", "H4", "H5", "H6",
+    "HR", "IMG", "LI", "OL", "P", "PRE", "STRONG", "TABLE", "TBODY", "TD", "TH", "THEAD",
+    "TR", "UL"
+  ]);
+  const allowedAttrs = {
+    A: new Set(["href", "title", "target", "rel"]),
+    IMG: new Set(["src", "alt", "title"])
+  };
+
+  for (const node of [...template.content.querySelectorAll("*")]) {
+    if (!allowedTags.has(node.tagName)) {
+      node.replaceWith(...node.childNodes);
+      continue;
+    }
+
+    for (const attr of [...node.attributes]) {
+      const name = attr.name.toLowerCase();
+      const allowed = allowedAttrs[node.tagName] && allowedAttrs[node.tagName].has(name);
+      if (name.startsWith("on") || !allowed) {
+        node.removeAttribute(attr.name);
+        continue;
+      }
+
+      if (name === "href" || name === "src") {
+        try {
+          const url = new URL(attr.value, window.location.href);
+          const safe = ["http:", "https:"].includes(url.protocol) || (name === "href" && url.protocol === "mailto:");
+          if (!safe) node.removeAttribute(attr.name);
+        } catch {
+          node.removeAttribute(attr.name);
+        }
+      }
+    }
+
+    if (node.tagName === "A") {
+      node.setAttribute("rel", "noopener noreferrer");
+    }
+  }
+
+  return template.content;
+}
+
 function renderMarkdown(md) {
-  previewDiv.innerHTML = marked.parse(md);
+  previewDiv.replaceChildren(sanitizeRenderedMarkdown(md));
 }
 
 // ─── Generate with Streaming ────────────────────────────────────────────────
