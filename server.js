@@ -8,6 +8,14 @@ require("dotenv").config();
 // ─── App Setup ───────────────────────────────────────────────────────────────
 
 const app = express();
+app.disable("x-powered-by");
+app.use((req, res, next) => {
+  res.setHeader("Content-Security-Policy", "default-src 'self'; script-src 'self' https://cdn.jsdelivr.net; style-src 'self'; img-src 'self' https: data:; connect-src 'self'; object-src 'none'; base-uri 'self'; frame-ancestors 'none';");
+  res.setHeader("X-Content-Type-Options", "nosniff");
+  res.setHeader("Referrer-Policy", "same-origin");
+  res.setHeader("X-Frame-Options", "DENY");
+  next();
+});
 app.use(express.json({ limit: "50kb" }));
 app.use(express.static(path.join(__dirname, "public")));
 
