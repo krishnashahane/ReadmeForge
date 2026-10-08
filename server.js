@@ -11,7 +11,7 @@ const app = express();
 app.use(express.json({ limit: "50kb" }));
 app.use(express.static(path.join(__dirname, "public")));
 
-const client = new Anthropic.default();
+const client = process.env.ANTHROPIC_API_KEY ? new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY }) : null;
 
 // ─── Rate Limiting ──────────────────────────────────────────────────────────
 
@@ -25,13 +25,22 @@ const generateLimiter = rateLimit({
 
 // ─── In-Memory History (per session, resets on restart) ─────────────────────
 
-const history = new Map(); // id -> { id, projectName, createdAt, readme }
+const history = new Map(); // id -> { id, sessionId, projectName, createdAt, readme }
 const MAX_HISTORY = 50;
 
 // ─── Validation ─────────────────────────────────────────────────────────────
 
 const VALID_LICENSES = ["MIT", "Apache-2.0", "GPL-3.0", "BSD-3-Clause", "ISC", "Unlicense"];
 const VALID_TEMPLATES = ["standard", "minimal", "detailed"];
+
+function getSessionId(req, res) {
+  const match = req.headers.cookie?.match(/(?:^|; )rf_session=([a-f0-9]{64})(?:;|$)/);
+  if (match) return match[1];
+  const id = crypto.randomBytes(32).toString("hex");
+  const secure = req.secure ? "; Secure" : "";
+  res.setHeader("Set-Cookie", `rf_session=${id}; HttpOnly; SameSite=Lax; Path=/; Max-Age=86400${secure}`);
+  return id;
+}
 
 function sanitize(str, maxLen = 5000) {
   if (typeof str !== "string") return "";
@@ -158,7 +167,7 @@ app.post("/api/generate", generateLimiter, async (req, res) => {
 
   try {
     const stream = await client.messages.stream({
-      model: "claude-sonnet-4-6",
+      model: process.env.ANTHROPIC_MODEL || "claude-sonnet-5-5",
       max_tokens: 8192,
       messages: [{ role: "user", content: prompt }],
     });
@@ -175,7 +184,7 @@ app.post("/api/generate", generateLimiter, async (req, res) => {
     const id = crypto.randomUUID();
     const entry = {
       id,
-      projectName: sanitize(req.body.projectName, 200) || "Untitled",
+      sessionId,\n      projectName: sanitize(req.body.projectName, 200) || "Untitled",
       template,
       createdAt: new Date().toISOString(),
       readme: fullText,
@@ -228,7 +237,7 @@ app.delete("/api/history/:id", (req, res) => {
 
 // ─── Start ──────────────────────────────────────────────────────────────────
 
-const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => {
+const PORT = Number(process.env.PORT) || 3000;
+app.use((err, req, res, next) => {\n  if (err.type === "entity.too.large") return res.status(413).json({ error: "Request body is too large." });\n  console.error(`[${new Date().toISOString()}] Unhandled error:`, err.message);\n  if (res.headersSent) return next(err);\n  res.status(500).json({ error: "Internal server error." });\n});\n\napp.listen(PORT, () => {
   console.log(`\n  ReadmeForge running at http://localhost:${PORT}\n`);
 });
