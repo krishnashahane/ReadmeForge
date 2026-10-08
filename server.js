@@ -148,10 +148,13 @@ Make it thorough, well-structured, and visually polished with emojis, tables, an
 
 // Health check
 app.get("/api/health", (req, res) => {
+  const sessionId = getSessionId(req, res);
+  const historyCount = [...history.values()].filter((entry) => entry.sessionId === sessionId).length;
   res.json({
     status: "ok",
+    configured: Boolean(client),
     uptime: Math.floor(process.uptime()),
-    historyCount: history.size,
+    historyCount,
   });
 });
 
