@@ -164,7 +164,11 @@ app.post("/api/generate", generateLimiter, async (req, res) => {
   if (errors.length > 0) {
     return res.status(400).json({ error: errors.join(" ") });
   }
+  if (!client) {
+    return res.status(503).json({ error: "Server is missing ANTHROPIC_API_KEY." });
+  }
 
+  const sessionId = getSessionId(req, res);
   const template = req.body.template || "standard";
   const prompt = buildPrompt({ ...req.body, template });
 
@@ -195,7 +199,8 @@ app.post("/api/generate", generateLimiter, async (req, res) => {
     const id = crypto.randomUUID();
     const entry = {
       id,
-      sessionId,\n      projectName: sanitize(req.body.projectName, 200) || "Untitled",
+      sessionId,
+      projectName: sanitize(req.body.projectName, 200) || "Untitled",
       template,
       createdAt: new Date().toISOString(),
       readme: fullText,
